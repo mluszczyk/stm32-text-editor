@@ -16,7 +16,7 @@ char* layout[4][4] = {
     {"1", "abc2", "def3", ""},     
     {"ghi4", "jkl5", "mno6", ""},
     {"prs7", "tuv8", "wxy9", ""},
-    {"*", "0", "#", ""},
+    {"*", " 0", "#", ""},
 };
 
 struct {
@@ -125,13 +125,20 @@ void button_repeat(void) {
 void pressed(int row, int col) {
     if (clear_button.row == row && clear_button.col == col) {
         LCDclear();
+        LCDputcharWrap('_');
     } else if(backspace_button.row == row && backspace_button.col == col) {
+        if (current_roundabout_button.row == -1) {
+            LCDbackspace();
+        }
         LCDbackspace();
+        LCDputcharWrap('_');
     } else {
         if (current_roundabout_button.row == row &&
             current_roundabout_button.col == col) {
             button_repeat();
         } else {
+            if (current_roundabout_button.row == -1)
+                LCDbackspace();  // erase cursor
             current_roundabout_button.row = -1;
             current_roundabout_button.col = -1;  // call fix button?
             current_roundabout_position = 0;
@@ -140,9 +147,11 @@ void pressed(int row, int col) {
                 current_roundabout_button.row = row;
                 current_roundabout_button.col = col;
                 LCDputcharWrap(*choice);
+                // cursor will be added at fix
 
             } else if (*choice) {
                 LCDputcharWrap(*choice);
+                LCDputcharWrap('_');
             }
         }
     }
@@ -192,7 +201,9 @@ void button_click(void) {
 }
 
 void fix_button(void) {
-    // LCDputcharWrap('F');
+    if (current_roundabout_button.row != -1) {
+        LCDputcharWrap('_');
+    }
     current_roundabout_button.row = -1;
     current_roundabout_button.col = -1;
     counter_mode = 0;
@@ -277,10 +288,7 @@ void setUpKeyboard() {
 int main() {
     LCDconfigure();
     LCDclear();
-    const char *text = "hello world";
-    for (const char* text_c = text; *text_c; ++text_c) {
-        LCDputcharWrap(*text_c);
-    }
+    LCDputcharWrap('_');
 
     setUpKeyboard();
 
