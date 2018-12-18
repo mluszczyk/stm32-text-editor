@@ -1,6 +1,6 @@
 #include <gpio.h>
 #include <stm32.h>
-#include <lcd.h>
+#include "lcd.h"
 #include <stdbool.h>
 
 #define SCAN_NOP_COUNT 10
@@ -112,6 +112,7 @@ void button_repeat(void) {
     char current_char = layout[current_roundabout_button.row]
                [current_roundabout_button.col]
                [current_roundabout_position];
+    LCDbackspace();
     LCDputcharWrap(current_char);
 }
 
