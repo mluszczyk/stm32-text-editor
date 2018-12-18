@@ -29,8 +29,12 @@ struct {
     int col;
 } current_roundabout_button = {-1, -1};
 
+int current_roundabout_position = 0;
+
 int tick_count = 0;
-int ticks_to_fix_button = 1000;
+int ticks_to_fix_button = 100;  // 1s
+
+int counter_mode = 0;  // 1 means wait for fix
 
 void ScanKeyboard() {
     // Sets global vars.
@@ -99,7 +103,16 @@ void EXTI9_5_IRQHandler(void) {
 bool current_press_recorded = false;
 
 void button_repeat(void) {
-    LCDputcharWrap('R');
+    current_roundabout_position++;
+    if (!layout[current_roundabout_button.row]
+               [current_roundabout_button.col]
+               [current_roundabout_position]) {
+        current_roundabout_position = 0;
+    }
+    char current_char = layout[current_roundabout_button.row]
+               [current_roundabout_button.col]
+               [current_roundabout_position];
+    LCDputcharWrap(current_char);
 }
 
 
@@ -113,6 +126,7 @@ void pressed(int row, int col) {
         } else {
             current_roundabout_button.row = -1;
             current_roundabout_button.col = -1;  // call fix button?
+            current_roundabout_position = 0;
             char* choice = layout[row][col];
             if (*choice && choice[1]) {
                 current_roundabout_button.row = row;
@@ -135,6 +149,10 @@ void button_click(void) {
 
         // 1. zatrzymaj licznik.
         // TIM3->CR1 = 0;  // nope
+        if (counter_mode == 0) {
+            counter_mode = 1;
+            tick_count = 0;
+        }
 
         // 2. ustaw stan niski na liniach kolumn.
         for (int pin = 0; pin < 4; ++pin) {
@@ -152,6 +170,9 @@ void button_click(void) {
     else {
         if (current_press_recorded) return;
 
+        // start over the counter
+        tick_count = 0;
+
         current_press_recorded = true;
 
         if (two_pressed) {
@@ -163,23 +184,23 @@ void button_click(void) {
 }
 
 void fix_button(void) {
-    LCDputcharWrap('F');
+    // LCDputcharWrap('F');
     current_roundabout_button.row = -1;
     current_roundabout_button.col = -1;
+    counter_mode = 0;
+    tick_count = 0;
+    //TIM3->CR1 = 0; // stop timer.
 }
 
 void handle_tick(void) {
-    if (tick_count == 0) {
-        button_click();
-    } else if (tick_count >= ticks_to_fix_button) {
-        fix_button();
-        
-        // stop counter.
-        TIM3->CR1 = 0;
-        tick_count = 0;
-    } else {
-        ++tick_count;
+    if (counter_mode == 1) {
+        tick_count++;
+        if (tick_count >= ticks_to_fix_button) {
+            fix_button();
+        }
     }
+
+    button_click();
 }
 
 void TIM3_IRQHandler(void) {
