@@ -1,6 +1,6 @@
 #include <gpio.h>
 #include <stm32.h>
-#include "lcd.h"
+#include "synced_lcd.h"
 #include <stdbool.h>
 
 #define SCAN_NOP_COUNT 10
@@ -123,28 +123,28 @@ void button_repeat(void) {
     char current_char = layout[current_roundabout_button.row]
                [current_roundabout_button.col]
                [current_roundabout_position];
-    LCDbackspace();
-    LCDputcharWrap(current_char);
+    SyncedLCDbackspace();
+    SyncedLCDputcharWrap(current_char);
 }
 
 
 void pressed(int row, int col) {
     if (clear_button.row == row && clear_button.col == col) {
-        LCDclear();
-        LCDputcharWrap('_');
+        SyncedLCDclear();
+        SyncedLCDputcharWrap('_');
     } else if(backspace_button.row == row && backspace_button.col == col) {
         if (current_roundabout_button.row == -1) {
-            LCDbackspace();
+            SyncedLCDbackspace();
         }
-        LCDbackspace();
-        LCDputcharWrap('_');
+        SyncedLCDbackspace();
+        SyncedLCDputcharWrap('_');
     } else {
         if (current_roundabout_button.row == row &&
             current_roundabout_button.col == col) {
             button_repeat();
         } else {
             if (current_roundabout_button.row == -1)
-                LCDbackspace();  // erase cursor
+                SyncedLCDbackspace();  // erase cursor
             current_roundabout_button.row = -1;
             current_roundabout_button.col = -1;  // call fix button?
             current_roundabout_position = 0;
@@ -152,12 +152,12 @@ void pressed(int row, int col) {
             if (*choice && choice[1]) {
                 current_roundabout_button.row = row;
                 current_roundabout_button.col = col;
-                LCDputcharWrap(*choice);
+                SyncedLCDputcharWrap(*choice);
                 // cursor will be added at fix
 
             } else if (*choice) {
-                LCDputcharWrap(*choice);
-                LCDputcharWrap('_');
+                SyncedLCDputcharWrap(*choice);
+                SyncedLCDputcharWrap('_');
             }
         }
     }
@@ -199,7 +199,7 @@ void button_click(void) {
         current_press_recorded = true;
 
         if (two_pressed) {
-            LCDputcharWrap('A');  // ambiguous
+            SyncedLCDputcharWrap('A');  // ambiguous
         } else if(any_pressed) {
             pressed(row_pressed, col_pressed);
         }
@@ -208,7 +208,7 @@ void button_click(void) {
 
 void fix_button(void) {
     if (current_roundabout_button.row != -1) {
-        LCDputcharWrap('_');
+        SyncedLCDputcharWrap('_');
     }
     current_roundabout_button.row = -1;
     current_roundabout_button.col = -1;
@@ -292,14 +292,14 @@ void setUpKeyboard() {
 }
 
 int main() {
-    LCDconfigure();
-    LCDclear();
-    LCDputcharWrap('_');
+    SyncedLCDconfigure();
+    SyncedLCDclear();
+    SyncedLCDputcharWrap('_');
 
     setUpKeyboard();
 
 
     for (int i = 0;; ++i) {
-        __NOP();
+        SyncedLCDsync();
     }
 }
