@@ -27,6 +27,11 @@ struct {
 struct {
     int row;
     int col;
+} backspace_button = {1, 3};
+
+struct {
+    int row;
+    int col;
 } current_roundabout_button = {-1, -1};
 
 int current_roundabout_position = 0;
@@ -120,6 +125,8 @@ void button_repeat(void) {
 void pressed(int row, int col) {
     if (clear_button.row == row && clear_button.col == col) {
         LCDclear();
+    } else if(backspace_button.row == row && backspace_button.col == col) {
+        LCDbackspace();
     } else {
         if (current_roundabout_button.row == row &&
             current_roundabout_button.col == col) {

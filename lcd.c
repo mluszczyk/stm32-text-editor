@@ -343,4 +343,8 @@ void LCDbackspace(void) {
     } else if (Line > 0) {
         LCDgoto(Line - 1, TextWidth - 1);
     }
+    if (Line >= 0 && Line < TextHeight &&
+        Position >= 0 && Position < TextWidth) {
+      LCDdrawChar(' ');
+    }
 }
