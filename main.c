@@ -5,13 +5,13 @@
 
 #define SCAN_NOP_COUNT 10
 
+// Populated by ScanKeyboard.
 bool any_pressed;
 bool two_pressed;
 int row_pressed;
 int col_pressed;
 
-bool roundabout_state = false;
-
+// Keyboard layout definition.
 char* layout[4][4] = {
     {"1", "abc2", "def3", ""},     
     {"ghi4", "jkl5", "mno6", ""},
@@ -19,26 +19,32 @@ char* layout[4][4] = {
     {"*", " 0", "#", ""},
 };
 
+// Special char: clear.
 struct {
     int row;
     int col;
 } clear_button = {2, 3};
 
+// Special char: backspace.
 struct {
     int row;
     int col;
 } backspace_button = {1, 3};
 
+// Is roundabout on? Which button?
 struct {
     int row;
     int col;
 } current_roundabout_button = {-1, -1};
 
+// Which choice, e.g. 0 for a, 1 for b.
 int current_roundabout_position = 0;
 
+// Software counter for fixing the number.
 int tick_count = 0;
 int ticks_to_fix_button = 100;  // 1s
 
+// Is the counter on?
 int counter_mode = 0;  // 1 means wait for fix
 
 void ScanKeyboard() {
