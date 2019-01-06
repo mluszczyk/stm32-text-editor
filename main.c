@@ -81,18 +81,19 @@ void ButtonRepeat(void) {
 }
 
 void ButtonPressed(int row, int col) {
-    if (CLEAR_BUTTON.row == row && CLEAR_BUTTON.col == col) {
-        BufferClear();
-    } else if(BACKSPACE_BUTTON.row == row && BACKSPACE_BUTTON.col == col) {
-        BufferBackspace();
+    if (current_roundabout_button.row == row &&
+        current_roundabout_button.col == col) {
+        ButtonRepeat();
     } else {
-        if (current_roundabout_button.row == row &&
-            current_roundabout_button.col == col) {
-            ButtonRepeat();
+        current_roundabout_button.row = -1;
+        current_roundabout_button.col = -1;  // call fix button?
+        current_roundabout_position = 0;
+
+        if (CLEAR_BUTTON.row == row && CLEAR_BUTTON.col == col) {
+            BufferClear();
+        } else if(BACKSPACE_BUTTON.row == row && BACKSPACE_BUTTON.col == col) {
+            BufferBackspace();
         } else {
-            current_roundabout_button.row = -1;
-            current_roundabout_button.col = -1;  // call fix button?
-            current_roundabout_position = 0;
             char* choice = layout[row][col];
             if (*choice && choice[1]) {
                 current_roundabout_button.row = row;
