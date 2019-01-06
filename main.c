@@ -9,26 +9,63 @@ char* layout[4][4] = {
     {"*", " 0", "#", ""},
 };
 
-// Special char: clear.
-struct {
+struct Button {
     int row;
     int col;
-} clear_button = {2, 3};
+};
 
-// Special char: backspace.
-struct {
-    int row;
-    int col;
-} backspace_button = {1, 3};
+// Special button: left arrow.
+const struct Button LEFT_BUTTON = {0, 3};
+
+// Special button: backspace.
+const struct Button BACKSPACE_BUTTON = {1, 3};
+
+// Special button: clear.
+const struct Button CLEAR_BUTTON = {2, 3};
+
+// Special button: right arrow.
+const struct Button RIGHT_BUTTON = {3, 3};
 
 // Is roundabout on? Which button?
-struct {
-    int row;
-    int col;
-} current_roundabout_button = {-1, -1};
+struct Button current_roundabout_button = {-1, -1};
 
 // Which choice, e.g. 0 for a, 1 for b.
 int current_roundabout_position = 0;
+
+void BufferReplaceChar(char new_char) {
+    SyncedLCDbackspace();
+    SyncedLCDbackspace();
+    SyncedLCDputcharWrap(new_char);
+    SyncedLCDputcharWrap('/');
+}
+
+void BufferClear(void) {
+    SyncedLCDclear();
+    SyncedLCDputcharWrap('_');
+}
+
+void BufferBackspace(void) {
+    SyncedLCDbackspace();
+    SyncedLCDbackspace();
+    SyncedLCDputcharWrap('_');
+}
+
+void BufferAddTemporary(char new_char) {
+    SyncedLCDbackspace();
+    SyncedLCDputcharWrap(new_char);
+    SyncedLCDputcharWrap('/');
+}
+
+void BufferAddFixed(char new_char) {
+    SyncedLCDbackspace();
+    SyncedLCDputcharWrap(new_char);
+    SyncedLCDputcharWrap('_');
+}
+
+void BufferFix(void) {
+    SyncedLCDbackspace();
+    SyncedLCDputcharWrap('_');
+}
 
 void ButtonRepeat(void) {
     current_roundabout_position++;
@@ -40,27 +77,19 @@ void ButtonRepeat(void) {
     char current_char = layout[current_roundabout_button.row]
                [current_roundabout_button.col]
                [current_roundabout_position];
-    SyncedLCDbackspace();
-    SyncedLCDputcharWrap(current_char);
+    BufferReplaceChar(current_char);
 }
 
 void ButtonPressed(int row, int col) {
-    if (clear_button.row == row && clear_button.col == col) {
-        SyncedLCDclear();
-        SyncedLCDputcharWrap('_');
-    } else if(backspace_button.row == row && backspace_button.col == col) {
-        if (current_roundabout_button.row == -1) {
-            SyncedLCDbackspace();
-        }
-        SyncedLCDbackspace();
-        SyncedLCDputcharWrap('_');
+    if (CLEAR_BUTTON.row == row && CLEAR_BUTTON.col == col) {
+        BufferClear();
+    } else if(BACKSPACE_BUTTON.row == row && BACKSPACE_BUTTON.col == col) {
+        BufferBackspace();
     } else {
         if (current_roundabout_button.row == row &&
             current_roundabout_button.col == col) {
             ButtonRepeat();
         } else {
-            if (current_roundabout_button.row == -1)
-                SyncedLCDbackspace();  // erase cursor
             current_roundabout_button.row = -1;
             current_roundabout_button.col = -1;  // call fix button?
             current_roundabout_position = 0;
@@ -68,12 +97,10 @@ void ButtonPressed(int row, int col) {
             if (*choice && choice[1]) {
                 current_roundabout_button.row = row;
                 current_roundabout_button.col = col;
-                SyncedLCDputcharWrap(*choice);
-                // cursor will be added at fix
+                BufferAddTemporary(*choice);
 
             } else if (*choice) {
-                SyncedLCDputcharWrap(*choice);
-                SyncedLCDputcharWrap('_');
+                BufferAddFixed(*choice);
             }
         }
     }
@@ -81,7 +108,7 @@ void ButtonPressed(int row, int col) {
 
 void FixButton(void) {
     if (current_roundabout_button.row != -1) {
-        SyncedLCDputcharWrap('_');
+        BufferFix();
     }
     current_roundabout_button.row = -1;
     current_roundabout_button.col = -1;
@@ -93,8 +120,7 @@ void AmbiguousPress(void) {
 
 int main() {
     SyncedLCDconfigure();
-    SyncedLCDclear();
-    SyncedLCDputcharWrap('_');
+    BufferClear();
 
     KeyboardConfigure();
 
