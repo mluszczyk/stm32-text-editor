@@ -4,21 +4,27 @@
 #include "keyboard.h"
 
 #define SCAN_NOP_COUNT 10
+// Button will be fixed after 100 ticks which makes 1 second.
+#define TICKS_TO_FIX_BUTTON 100
 
-// Populated by ScanKeyboard.
+// Populated by ScanKeyboard: what has been pressed on the
+// keyboard.
 bool any_pressed;
 bool two_pressed;
 int row_pressed;
 int col_pressed;
 
+// Flag to only report each press once.
 bool current_press_recorded = false;
 
-// Software counter for fixing the number.
+// Software counter for fixing the number after a delay.
 int tick_count = 0;
-int ticks_to_fix_button = 100;  // 1s
 
-// Is the counter on?
-int counter_mode = 0;  // 1 means wait for fix
+// Counter mode:
+// 0 means default mode - used to stabilise the keyboard state 
+//   after a button press.
+// 1 means additionaly count ticks to fix button after some delay.
+int counter_mode = 0;
 
 void ButtonClick(void);
 void ScanKeyboard(void);
@@ -26,7 +32,6 @@ void ScanKeyboard(void);
 void KeyboardConfigure(void) {
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
     RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
-
 
     // Ustaw stan niski na wyprowadzeniach kolumn.
     for (int i = 0; i < 4; ++i) {
@@ -79,7 +84,7 @@ void KeyboardConfigure(void) {
 void HandleTick(void) {
     if (counter_mode == 1) {
         tick_count++;
-        if (tick_count >= ticks_to_fix_button) {
+        if (tick_count >= TICKS_TO_FIX_BUTTON) {
             FixButton();
             counter_mode = 0;
             tick_count = 0;
@@ -92,7 +97,7 @@ void HandleTick(void) {
 void TIM3_IRQHandler(void) {
     uint32_t it_status = TIM3->SR & TIM3->DIER;
     if (it_status & TIM_SR_UIF) {
-        // wyzeruj znacznik przerwania TIMx
+        // Wyzeruj znacznik przerwania TIMx
         TIM3->SR = ~TIM_SR_UIF;
 
         HandleTick();
@@ -107,8 +112,7 @@ void ButtonClick(void) {
     if (!any_pressed) {
         current_press_recorded = false;
 
-        // 1. zatrzymaj licznik.
-        // TIM3->CR1 = 0;  // nope
+        // Restart the counter.
         if (counter_mode == 0) {
             counter_mode = 1;
             tick_count = 0;
