@@ -1,5 +1,8 @@
+#include <stdbool.h>
 #include "keyboard.h"
 #include "synced_lcd.h"
+
+#define BUFFER_SIZE 45
 
 // Keyboard layout definition.
 char* layout[4][4] = {
@@ -32,6 +35,10 @@ struct Button current_roundabout_button = {-1, -1};
 // Which choice, e.g. 0 for a, 1 for b.
 int current_roundabout_position = 0;
 
+// Character count.
+// Used to block the input when the screen is full.
+int character_count = 0;
+
 void BufferReplaceChar(char new_char) {
     SyncedLCDbackspace();
     SyncedLCDbackspace();
@@ -42,29 +49,39 @@ void BufferReplaceChar(char new_char) {
 void BufferClear(void) {
     SyncedLCDclear();
     SyncedLCDputcharWrap('_');
+    character_count = 0;
 }
 
 void BufferBackspace(void) {
     SyncedLCDbackspace();
     SyncedLCDbackspace();
     SyncedLCDputcharWrap('_');
+    if (character_count)
+        --character_count;
 }
 
 void BufferAddTemporary(char new_char) {
     SyncedLCDbackspace();
     SyncedLCDputcharWrap(new_char);
     SyncedLCDputcharWrap('/');
+    ++character_count;
 }
 
 void BufferAddFixed(char new_char) {
     SyncedLCDbackspace();
     SyncedLCDputcharWrap(new_char);
     SyncedLCDputcharWrap('_');
+    ++character_count;
 }
 
 void BufferFix(void) {
     SyncedLCDbackspace();
     SyncedLCDputcharWrap('_');
+}
+
+bool BufferIsFull(void) {
+    // Always leave one char for the cursor.
+    return character_count + 1 >= BUFFER_SIZE;
 }
 
 void ButtonRepeat(void) {
@@ -94,6 +111,7 @@ void ButtonPressed(int row, int col) {
         } else if(BACKSPACE_BUTTON.row == row && BACKSPACE_BUTTON.col == col) {
             BufferBackspace();
         } else {
+            if (BufferIsFull()) return;
             char* choice = layout[row][col];
             if (*choice && choice[1]) {
                 current_roundabout_button.row = row;
