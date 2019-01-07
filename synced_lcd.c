@@ -65,3 +65,8 @@ void SyncedLCDsync() {
         }
     }
 }
+
+void SyncedLCDgoto(int row, int col) {
+    current_row = row;
+    current_col = col;
+}
