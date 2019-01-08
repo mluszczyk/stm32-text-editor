@@ -58,10 +58,10 @@ void SyncedLCDsync() {
     LCDgoto(0, 0);
     for (int i = 0; i < HEIGHT; ++i) {
         for (int j = 0; j < WIDTH; ++j) {
-            if (is_synced[current_row][current_col]) continue;
+            if (is_synced[i][j]) continue;
             LCDgoto(i, j);
             LCDputchar(state[i][j]);
-            is_synced[current_row][current_col] = true;
+            is_synced[i][j] = true;
         }
     }
 }
