@@ -60,7 +60,12 @@ void BufferClear(void) {
     SyncedLCDputcharWrap('_');
     character_count = 0;
     cursor_position = 0;
-    buffer_content[0] = '\0';
+    // Clear the whole buffer.
+    // Setting 0 at position 0 is not sufficient, as it may get
+    // overwritten and the garbage may reappear.
+    for (int i = 0; i < BUFFER_SIZE; ++i) {
+        buffer_content[i] = '\0';
+    }
 }
 
 void SynchroniseBufferPastCursor(void) {
@@ -108,6 +113,7 @@ void BufferAddTemporary(char new_char) {
     SyncedLCDputcharWrap(new_char);
     SyncedLCDputcharWrap('/');
     ++character_count;
+    ++cursor_position;
     SynchroniseBufferPastCursor();
 }
 
@@ -118,6 +124,7 @@ void BufferAddFixed(char new_char) {
     SyncedLCDputcharWrap(new_char);
     SyncedLCDputcharWrap('_');
     ++character_count;
+    ++cursor_position;
     SynchroniseBufferPastCursor();
 }
 
