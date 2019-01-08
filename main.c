@@ -52,7 +52,7 @@ void BufferReplaceChar(char new_char) {
     SyncedLCDbackspace();
     SyncedLCDputcharWrap(new_char);
     SyncedLCDputcharWrap('/');
-    buffer_content[cursor_position] = new_char;
+    buffer_content[cursor_position - 1] = new_char;
 }
 
 void BufferClear(void) {
@@ -76,7 +76,7 @@ void SynchroniseLCDCursor(void) {
 }
 
 void SynchroniseBufferPastCursor(void) {
-    for (int i = cursor_position + 1; buffer_content[i]; ++i) {
+    for (int i = cursor_position; buffer_content[i]; ++i) {
         SyncedLCDputcharWrap(buffer_content[i]);
     }
     SyncedLCDputcharWrap(' ');
@@ -98,11 +98,12 @@ void BufferBackspace(void) {
     if (!cursor_position || !character_count) {
         return;
     }
-    for (int i = cursor_position; buffer_content[i]; ++i) {
+    --cursor_position;
+    int i;
+    for (i = cursor_position; buffer_content[i]; ++i) {
         buffer_content[i] = buffer_content[i + 1];
     }
     --character_count;
-    --cursor_position;
     SyncedLCDbackspace();
     SyncedLCDbackspace();
     SyncedLCDputcharWrap('_');
