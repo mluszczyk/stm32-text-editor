@@ -68,15 +68,19 @@ void BufferClear(void) {
     }
 }
 
+void SynchroniseLCDCursor(void) {
+    // Keep the LCD library cursor one char past the cursor char.
+    int past_cursor_row = (cursor_position + 1) / SCREEN_WIDTH;
+    int past_cursor_col = (cursor_position + 1) % SCREEN_WIDTH;
+    SyncedLCDgoto(past_cursor_row, past_cursor_col);
+}
+
 void SynchroniseBufferPastCursor(void) {
     for (int i = cursor_position + 1; buffer_content[i]; ++i) {
         SyncedLCDputcharWrap(buffer_content[i]);
     }
     SyncedLCDputcharWrap(' ');
-    // Keep the LCD library cursor one char past the cursor char.
-    int past_cursor_row = (cursor_position + 1) / SCREEN_WIDTH;
-    int past_cursor_col = (cursor_position + 1) % SCREEN_WIDTH;
-    SyncedLCDgoto(past_cursor_row, past_cursor_col);
+    SynchroniseLCDCursor();
 }
 
 void InsertCharIntoBuffer(int position, char new_char, char *buffer) {
@@ -136,6 +140,7 @@ void BufferMoveLeft(void) {
     SyncedLCDbackspace();
     SyncedLCDputcharWrap('_');
     SyncedLCDputcharWrap(buffer_content[cursor_position]);
+    SynchroniseLCDCursor();
 }
 
 void BufferMoveRight(void) {
